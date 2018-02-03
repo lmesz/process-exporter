@@ -125,6 +125,7 @@ type (
 		cmdline []string
 		io      *procfs.ProcIO
 		fs      *FS
+		netdev  *procfs.NetDev
 	}
 
 	proc struct {
@@ -295,6 +296,17 @@ func (p *proccache) getIo() (procfs.ProcIO, error) {
 	return *p.io, nil
 }
 
+func (p *proccache) getNetDev() (procfs.NetDev, error) {
+	if p.netdev == nil {
+		netdev, err := p.Proc.NewNetDev()
+		if err != nil {
+			return procfs.NetDev{}, err
+		}
+		p.netdev = &netdev
+	}
+	return *p.netdev, nil
+}
+
 // GetStatic returns the ProcStatic corresponding to this proc.
 func (p *proccache) GetStatic() (Static, error) {
 	// /proc/<pid>/cmdline is normally world-readable.
@@ -326,8 +338,17 @@ func (p proc) GetCounts() (Counts, int, error) {
 		return Counts{}, 0, err
 	}
 
-	io, err := p.getIo()
 	softerrors := 0
+	nd, err := p.getNetDev()
+	if err != nil {
+		softerrors++
+	}
+
+	for _, line := range nd {
+		fmt.Println(line.Name)
+	}
+
+	io, err := p.getIo()
 	if err != nil {
 		softerrors++
 	}
