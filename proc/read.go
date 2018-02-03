@@ -66,8 +66,7 @@ type (
 		Other    int
 	}
 
-	NetworkDevice struct {
-		Name                     string
+	Network struct {
 		ReceivedBytes            uint64
 		ErrorsDuringReceive      uint64
 		TransmittedBytes         uint64
@@ -81,7 +80,7 @@ type (
 		Filedesc
 		NumThreads uint64
 		States
-		Network []NetworkDevice
+		Network
 	}
 
 	// Thread contains the name and counts for a thread.
@@ -417,16 +416,12 @@ func (p proc) GetMetrics() (Metrics, int, error) {
 		return Metrics{}, 0, err
 	}
 
-	var network []NetworkDevice
+	network := Network{}
 	for _, line := range nd {
-		tempNetwork := NetworkDevice{
-			Name:                     line.Name,
-			ReceivedBytes:            line.RxBytes,
-			ErrorsDuringReceive:      line.RxErrors,
-			TransmittedBytes:         line.TxBytes,
-			ErrorsDuringTransmission: line.TxErrors,
-		}
-		network = append(network, tempNetwork)
+		network.ReceivedBytes += line.RxBytes
+		network.ErrorsDuringReceive += line.RxErrors
+		network.TransmittedBytes += line.TxBytes
+		network.ErrorsDuringTransmission += line.TxErrors
 	}
 
 	return Metrics{
