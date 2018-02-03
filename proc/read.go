@@ -66,6 +66,14 @@ type (
 		Other    int
 	}
 
+	NetworkDevice struct {
+		Name                     string
+		ReceivedBytes            uint64
+		ErrorsDuringReceive      uint64
+		TransmittedBytes         uint64
+		ErrorsDuringTransmission uint64
+	}
+
 	// Metrics contains data read from /proc/pid/*
 	Metrics struct {
 		Counts
@@ -73,6 +81,7 @@ type (
 		Filedesc
 		NumThreads uint64
 		States
+		Network []NetworkDevice
 	}
 
 	// Thread contains the name and counts for a thread.
@@ -338,17 +347,8 @@ func (p proc) GetCounts() (Counts, int, error) {
 		return Counts{}, 0, err
 	}
 
-	softerrors := 0
-	nd, err := p.getNetDev()
-	if err != nil {
-		softerrors++
-	}
-
-	for _, line := range nd {
-		fmt.Println(line.Name)
-	}
-
 	io, err := p.getIo()
+	softerrors := 0
 	if err != nil {
 		softerrors++
 	}
@@ -412,6 +412,23 @@ func (p proc) GetMetrics() (Metrics, int, error) {
 		return Metrics{}, 0, err
 	}
 
+	nd, err := p.getNetDev()
+	if err != nil {
+		return Metrics{}, 0, err
+	}
+
+	var network []NetworkDevice
+	for _, line := range nd {
+		tempNetwork := NetworkDevice{
+			Name:                     line.Name,
+			ReceivedBytes:            line.RxBytes,
+			ErrorsDuringReceive:      line.RxErrors,
+			TransmittedBytes:         line.TxBytes,
+			ErrorsDuringTransmission: line.TxErrors,
+		}
+		network = append(network, tempNetwork)
+	}
+
 	return Metrics{
 		Counts: counts,
 		Memory: Memory{
@@ -424,6 +441,7 @@ func (p proc) GetMetrics() (Metrics, int, error) {
 		},
 		NumThreads: uint64(stat.NumThreads),
 		States:     states,
+		Network:    network,
 	}, softerrors, nil
 }
 
