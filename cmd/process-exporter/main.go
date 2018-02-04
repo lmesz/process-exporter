@@ -143,27 +143,10 @@ var (
 		"Number of processes in states Running, Sleeping, Waiting, Zombie, or Other",
 		[]string{"groupname", "state"},
 		nil)
-	receivedBytesDesc = prometheus.NewDesc(
-		"namedprocess_namegroup_received_bytes",
-		"Received bytes",
-		[]string{"groupname"},
-		nil)
-
-	errorsDuringReceiveDesc = prometheus.NewDesc(
-		"namedprocess_namegroup_errors_during_receive",
-		"Errors during receive",
-		[]string{"groupname"},
-		nil)
-	transmittedBytesDesc = prometheus.NewDesc(
-		"namedprocess_namegroup_transmitted_bytes",
-		"Transmitted bytes",
-		[]string{"groupname"},
-		nil)
-
-	errorsDuringTransmissionDesc = prometheus.NewDesc(
-		"namedprocess_namegroup_errors_during_transmission",
-		"Errors during transmission",
-		[]string{"groupname"},
+	networkDesc = prometheus.NewDesc(
+		"namedprocess_namegroup_network",
+		"Number of received, transmitted, dropped bytes",
+		[]string{"groupname", "network"},
 		nil)
 
 	scrapeErrorsDesc = prometheus.NewDesc(
@@ -433,10 +416,7 @@ func (p *NamedProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- minorPageFaultsDesc
 	ch <- numThreadsDesc
 	ch <- statesDesc
-	ch <- receivedBytesDesc
-	ch <- errorsDuringReceiveDesc
-	ch <- transmittedBytesDesc
-	ch <- errorsDuringTransmissionDesc
+	ch <- networkDesc
 	ch <- scrapeErrorsDesc
 	ch <- scrapeProcReadErrorsDesc
 	ch <- scrapePartialErrorsDesc
@@ -506,14 +486,10 @@ func (p *NamedProcessCollector) scrape(ch chan<- prometheus.Metric) {
 				prometheus.GaugeValue, float64(gcounts.States.Zombie), gname, "Zombie")
 			ch <- prometheus.MustNewConstMetric(statesDesc,
 				prometheus.GaugeValue, float64(gcounts.States.Other), gname, "Other")
-			ch <- prometheus.MustNewConstMetric(receivedBytesDesc,
-				prometheus.GaugeValue, float64(gcounts.Network.ReceivedBytes), gname)
-			ch <- prometheus.MustNewConstMetric(errorsDuringReceiveDesc,
-				prometheus.GaugeValue, float64(gcounts.Network.ReceivedBytes), gname)
-			ch <- prometheus.MustNewConstMetric(transmittedBytesDesc,
-				prometheus.GaugeValue, float64(gcounts.Network.ReceivedBytes), gname)
-			ch <- prometheus.MustNewConstMetric(errorsDuringTransmissionDesc,
-				prometheus.GaugeValue, float64(gcounts.Network.ReceivedBytes), gname)
+			ch <- prometheus.MustNewConstMetric(networkDesc,
+				prometheus.GaugeValue, float64(gcounts.Network.ReceivedBytes), gname, "ReceivedBytes")
+			ch <- prometheus.MustNewConstMetric(networkDesc,
+				prometheus.GaugeValue, float64(gcounts.Network.TransmittedBytes), gname, "TransmittedBytes")
 			if p.threads {
 				for _, thr := range gcounts.Threads {
 					ch <- prometheus.MustNewConstMetric(threadCountDesc,
