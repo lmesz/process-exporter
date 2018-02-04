@@ -38,6 +38,7 @@ type (
 		WorstFDratio    float64
 		NumThreads      uint64
 		Threads         []Threads
+		Network
 	}
 )
 
@@ -85,6 +86,12 @@ func groupadd(grp Group, ts Update) Group {
 	grp.NumThreads += ts.NumThreads
 	grp.Counts.Add(ts.Latest)
 	grp.States.Add(ts.States)
+
+	grp.Network.ReceivedBytes = ts.Network.ReceivedBytes
+	grp.Network.ErrorsDuringReceive = ts.Network.ErrorsDuringReceive
+	grp.Network.TransmittedBytes = ts.Network.TransmittedBytes
+	grp.Network.ErrorsDuringTransmission = ts.Network.ErrorsDuringTransmission
+
 	if grp.OldestStartTime == zeroTime || ts.Start.Before(grp.OldestStartTime) {
 		grp.OldestStartTime = ts.Start
 	}

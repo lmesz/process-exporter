@@ -77,6 +77,8 @@ type (
 		NumThreads uint64
 		// States is how many processes are in which run state.
 		States
+		// Network info per process.
+		Network
 		// Threads are the thread updates for this process, if the Tracker
 		// has trackThreads==true.
 		Threads []ThreadUpdate
@@ -142,6 +144,7 @@ func (tp *trackedProc) getUpdate() Update {
 		Start:      tp.static.StartTime,
 		NumThreads: tp.metrics.NumThreads,
 		States:     tp.metrics.States,
+		Network:    tp.metrics.Network,
 	}
 	if len(tp.threads) > 1 {
 		for _, tt := range tp.threads {
